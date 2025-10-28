@@ -22,7 +22,7 @@ cat <<CONFIG > "${PROJECT_ROOT}/backend/.env"
 DB_URL=sqlite:///./data/app.db
 REDIS_URL=redis://localhost:6379/0
 SECRET_KEY=$(openssl rand -hex 32)
-PANEL_PORT=8443
+PANEL_PORT=8444
 CONFIG
 
 echo "Environment prepared. Activate with: source ${VENV_PATH}/bin/activate"
