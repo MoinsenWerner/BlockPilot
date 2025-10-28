@@ -1,0 +1,240 @@
+name: minecraft-server-control-panel
+version: 1.0
+type: web-application
+language: python
+frameworks:
+  - fastapi
+  - celery
+  - sqlalchemy
+  - vue.js
+  - redis
+  - bootstrap
+license: open-source
+summary: >
+  Eine modulare Webanwendung zur Verwaltung, Automatisierung und Überwachung mehrerer Minecraft-Server
+  und Minecraft-Proxy-Instanzen über eine zentrale Weboberfläche oder REST-API.
+
+description: |
+  Dieses Projekt ist ein webbasiertes Kontroll- und Automatisierungssystem für Minecraft-Server- und Proxy-Software.
+  Es ermöglicht das Erstellen, Starten, Stoppen, Neustarten und Überwachen beliebig vieler Minecraft-Instanzen
+  (Server und Proxys) mit wählbarer Software und Version. Beim Erstellen einer Instanz kann zwischen Vanilla,
+  Paper, Fabric, Folia, Forge-Installer, NeoForge-Installer und Purpur gewählt werden. Für Proxys stehen Velocity
+  und BungeeCord zur Auswahl. Jede Instanz kann einen eigenen Namen erhalten, über Autostart- und Auto-Restart-Optionen
+  verfügen und vollständig über eine Web- oder API-Oberfläche gesteuert werden.
+
+objectives:
+  - Verwaltung mehrerer Minecraft-Server und Proxy-Instanzen
+  - Auswahl der Serversoftware beim Erstellen: Vanilla, Paper, Fabric, Folia, Forge-Installer, NeoForge-Installer, Purpur
+  - Auswahl der Proxysoftware: Velocity oder BungeeCord
+  - Auswahl beliebiger verfügbarer Versionen pro Software (automatische Version-Liste)
+  - Namensvergabe pro Instanz
+  - Einstellbare Optionen:
+      - Autostart bei Projektstart
+      - automatischer Neustart bei Server-Crash
+  - Prozesssteuerung (Start, Stop, Restart)
+  - Echtzeit-Konsolenzugriff über WebSocket
+  - Dateiverwaltung, Backups, Zeitpläne, Rollenverwaltung, Webhooks
+  - REST-API zur Integration in externe Tools oder Bots
+  - HTTPS-Sicherheit, JWT-Authentifizierung, Mehrsprachigkeit
+
+architecture:
+  backend:
+    language: python
+    framework: fastapi
+    task_runner: celery
+    orm: sqlalchemy
+    database: sqlite or mysql
+    cache: redis
+    auth: jwt
+  frontend:
+    language: javascript
+    framework: vue.js
+    ui: bootstrap
+  api:
+    type: rest
+    base_path: /api/v1/
+    auth: bearer_token
+    endpoints:
+      - GET /instances
+      - POST /instances/create
+      - POST /instances/{id}/start
+      - POST /instances/{id}/stop
+      - POST /instances/{id}/restart
+      - GET /instances/{id}/logs
+      - PATCH /instances/{id}/settings
+      - GET /versions/{software_type}
+      - GET /users
+      - POST /auth/login
+      - POST /auth/refresh
+  deployment:
+    - systemd-service
+    - docker-container
+    - reverse-proxy (nginx/apache)
+    - https via letsencrypt or custom certificates
+
+instance_creation:
+  types:
+    - server:
+        software_options:
+          - vanilla
+          - paper
+          - fabric
+          - folia
+          - forge-installer
+          - neoforge-installer
+          - purpur
+    - proxy:
+        software_options:
+          - velocity
+          - bungee-cord
+  parameters:
+    - name: string
+    - software_type: string
+    - version: selectable from available versions list
+    - autostart: boolean
+    - autorestart_on_crash: boolean
+    - memory_limit: optional integer (MB)
+    - java_args: optional string
+    - max_players: optional integer
+    - port: optional integer
+
+features:
+  management:
+    - Multi-Server- und Multi-Proxy-Support
+    - Start/Stop/Restart-Funktionen
+    - Crash-Detection mit Auto-Restart-Option
+    - Autostart-Funktion bei Projektstart
+    - Software- und Versions-Auswahl
+    - Individuelle Namensvergabe pro Instanz
+    - Tag-System und Gruppierung
+  monitoring:
+    - CPU/RAM/Disk-Usage pro Instanz
+    - Laufzeit, Status und Prozessüberwachung
+    - Echtzeit-Konsolenausgabe
+    - Ressourcenstatistiken mit Verlauf
+  file_manager:
+    - Browserbasierter Datei-Explorer
+    - Upload, Download, ZIP-Funktionen
+    - Editor mit Syntax-Highlighting
+  scheduling:
+    - Cron-ähnliche Aufgabenplanung (Start, Stop, Restart, Backup, Commands)
+  backup:
+    - Manuelle und automatische Backups mit Rotation
+    - Remote-Ziele (SFTP, FTP) möglich
+  user_system:
+    - Multi-User-System mit Rollen und Rechten
+    - Zwei-Faktor-Authentifizierung
+    - Audit-Log aller Aktionen
+  api:
+    - REST-API mit JWT-Auth
+    - Webhooks bei Ereignissen (Start, Stop, Crash, Backup abgeschlossen)
+  security:
+    - HTTPS-Unterstützung
+    - Passwort-Hashing mit bcrypt
+    - Login-Sperre bei Fehlversuchen
+  integration:
+    - Discord-Webhook-Integration
+    - CLI-Interface
+    - SDK/Wrapper für externe Automatisierung
+  localization:
+    - Mehrsprachige Benutzeroberfläche (EN, DE, FR, ES, PT)
+
+dependencies:
+  system:
+    - python3
+    - redis
+    - nginx (optional)
+  python:
+    - fastapi
+    - celery
+    - sqlalchemy
+    - pydantic
+    - httpx
+    - bcrypt
+    - jinja2
+    - uvicorn
+    - redis
+  frontend:
+    - vue
+    - axios
+    - bootstrap
+    - chart.js
+
+entrypoints:
+  backend:
+    - command: python main.py
+      env:
+        - DB_URL=sqlite:///data/app.db
+        - REDIS_URL=redis://localhost:6379
+        - PANEL_PORT=8443
+  celery_worker:
+    - command: celery -A panel worker -l info
+  frontend:
+    - path: frontend/
+    - command: npm run serve
+
+storage:
+  - /opt/controlpanel/data
+  - /opt/controlpanel/backups
+  - /opt/controlpanel/logs
+  - /opt/controlpanel/instances
+
+api_spec:
+  auth:
+    POST /api/v1/auth/login:
+      request: { username: string, password: string }
+      response: { token: string, refresh_token: string }
+  instances:
+    GET /api/v1/instances:
+      description: Liste aller erstellten Server- und Proxy-Instanzen
+    POST /api/v1/instances/create:
+      description: Erstellt eine neue Instanz mit Software-, Versions- und Startparametern
+    PATCH /api/v1/instances/{id}/settings:
+      description: Ändert Instanz-Einstellungen (Autostart, Auto-Restart, Name etc.)
+    POST /api/v1/instances/{id}/start:
+      description: Startet eine Instanz
+    POST /api/v1/instances/{id}/stop:
+      description: Stoppt eine Instanz
+    POST /api/v1/instances/{id}/restart:
+      description: Startet eine Instanz neu
+    GET /api/v1/instances/{id}/logs:
+      description: Gibt aktuelle Log-Daten der Instanz zurück
+  versions:
+    GET /api/v1/versions/{software_type}:
+      description: Liefert alle verfügbaren Versionen für die gewählte Software
+  users:
+    GET /api/v1/users:
+      description: Liefert Benutzer- und Rolleninformationen
+
+target_users:
+  - Minecraft-Server-Administratoren
+  - Netzwerke mit mehreren Servern oder Proxys
+  - Mod- und Plugin-Entwickler
+  - Hoster und Managed-Service-Anbieter
+  - Automatisierungs- und Monitoring-Tools
+
+roadmap:
+  - [ ] Erweiterbares Plugin-System
+  - [ ] Version-Auto-Update-Checker
+  - [ ] Remote-Node-Support für verteilte Systeme
+  - [ ] Machine-Learning-gestützte Crashlog-Analyse
+  - [ ] WebSocket-API für Echtzeit-Monitoring
+
+maintainers:
+  - name: Core Development Team
+    url: https://example.com/mc-panel
+  - name: Open Source Community
+    url: https://github.com/example/mc-panel
+
+tags:
+  - minecraft
+  - server-management
+  - proxy-management
+  - automation
+  - fastapi
+  - monitoring
+  - api
+  - web-ui
+  - devops
+  - backups
+  - system-control
