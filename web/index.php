@@ -1,5 +1,5 @@
 <?php
-$apiBase = getenv('API_BASE') ?: 'http://localhost:8443/api/v1';
+$apiBase = getenv('API_BASE') ?: 'http://185.245.61.161:8444/api/v1';
 $healthUrl = rtrim($apiBase, '/') . '/instances';
 
 $instances = [];
